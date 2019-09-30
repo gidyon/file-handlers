@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["uploads-pathogen"],{"64c9":function(n,t,e){"use strict";e.r(t);var a=function(){var n=this,t=n.$createElement,e=n._self._c||t;return e("v-container",{attrs:{fluid:"","pt-0":""}},[n._v("\n    Hello Pathogen\n")])},l=[],o={data:function(){return{}}},u=o,r=e("2877"),c=Object(r["a"])(u,a,l,!1,null,null,null);t["default"]=c.exports}}]);
+//# sourceMappingURL=uploads-pathogen.28801f3c.js.map

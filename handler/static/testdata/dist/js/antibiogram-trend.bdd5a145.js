@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["antibiogram-trend"],{d116:function(n,t,e){"use strict";e.r(t);var r=function(){var n=this,t=n.$createElement,e=n._self._c||t;return e("v-card",{attrs:{flat:""}},[n._v("\n    trends coming soon\n")])},a=[],o={},s=o,c=e("2877"),l=Object(c["a"])(s,r,a,!1,null,null,null);t["default"]=l.exports}}]);
+//# sourceMappingURL=antibiogram-trend.bdd5a145.js.map

@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["uploads-infection"],{bcbc:function(n,t,e){"use strict";e.r(t);var c=function(){var n=this,t=n.$createElement,e=n._self._c||t;return e("v-container",{attrs:{fluid:"","pt-0":""}},[n._v("\n    Hello Infection\n")])},l=[],o={data:function(){return{}}},u=o,a=e("2877"),i=Object(a["a"])(u,c,l,!1,null,null,null);t["default"]=i.exports}}]);
+//# sourceMappingURL=uploads-infection.68f91b21.js.map
