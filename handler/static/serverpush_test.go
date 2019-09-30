@@ -32,7 +32,7 @@ var _ = Describe("Server push with custom notFoundhandler", func() {
 	}
 
 	// Setup handler
-	handler, err := NewHandler(RootDir, URLPrefix, notFound, pushContent)
+	handler, err := NewHandler(&ServerOptions{RootDir, URLPrefix, notFound, pushContent})
 	Context("setup handler", func() {
 		It("should setup handler without an error", func() {
 			Expect(err).ShouldNot(HaveOccurred())

@@ -20,7 +20,9 @@ var _ = Describe("Custom notFoundhandler", func() {
 	})
 
 	// Setup handler
-	handler, err := NewHandler(RootDir, URLPrefix, notFound, nil)
+	handler, err := NewHandler(&ServerOptions{
+		RootDir, URLPrefix, notFound, nil,
+	})
 	Context("Setup Expectations", func() {
 		It("should set up handler without error", func() {
 			Expect(err).ShouldNot(HaveOccurred())
