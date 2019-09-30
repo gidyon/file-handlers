@@ -46,36 +46,39 @@ type staticFileServer struct {
 	notFoundHandler http.Handler
 }
 
+// ServerOptions contains options for configuring static file server
+type ServerOptions struct {
+	RootDir         string
+	URLPathPrefix   string
+	NotFoundHandler http.Handler
+	PushContent     map[string][]string
+}
+
 // NewHandler creates a static file server for the given rootDir directory.
 // It caches the file in memory so that subsequent calls only write the files data to response
-func NewHandler(
-	rootDir string,
-	URLPathPrefix string,
-	notFoundHandler http.Handler,
-	pushContent map[string][]string,
-) (http.Handler, error) {
-	if rootDir == "" {
+func NewHandler(opt *ServerOptions) (http.Handler, error) {
+	if opt.RootDir == "" {
 		// set rootDir to current directory
-		rootDir = "."
+		opt.RootDir = "."
 	}
 
 	// clean rootDir
-	rootDir = filepath.Clean(rootDir)
+	opt.RootDir = filepath.Clean(opt.RootDir)
 
 	// clean and update URLPathPrefix
-	URLPathPrefix = "/" + strings.TrimPrefix(filepath.Clean(URLPathPrefix), "/")
+	opt.URLPathPrefix = "/" + strings.TrimPrefix(filepath.Clean(opt.URLPathPrefix), "/")
 
-	if notFoundHandler == nil {
+	if opt.NotFoundHandler == nil {
 		// set not found to be http default
-		notFoundHandler = http.NotFoundHandler()
+		opt.NotFoundHandler = http.NotFoundHandler()
 	}
 
 	// create the server
 	sfs := &staticFileServer{
-		rootDir:       rootDir,
+		rootDir:       opt.RootDir,
 		mu:            &sync.RWMutex{},
 		files:         make(map[string]*staticFile, 0),
-		pushContent:   make(map[string]*pushOptions, len(pushContent)),
+		pushContent:   make(map[string]*pushOptions, len(opt.PushContent)),
 		notFoundPaths: make(map[string]int8, 0),
 		pushOptions: &http.PushOptions{
 			Method: http.MethodGet,
@@ -83,12 +86,12 @@ func NewHandler(
 				"pushed-from": []string{"api"},
 			},
 		},
-		pushSupport:     pushContent != nil && len(pushContent) > 0,
-		notFoundHandler: notFoundHandler,
+		pushSupport:     opt.PushContent != nil && len(opt.PushContent) > 0,
+		notFoundHandler: opt.NotFoundHandler,
 	}
 
 	if sfs.pushSupport {
-		for ppath, files := range pushContent {
+		for ppath, files := range opt.PushContent {
 			pushVal := &pushOptions{
 				strict:    !strings.HasSuffix(ppath, "*"),
 				path:      filepath.Clean(ppath), // removes any trailing /
@@ -97,7 +100,7 @@ func NewHandler(
 
 			for _, file := range files {
 				filePath := filepath.Clean(file)
-				pushVal.pushFiles = append(pushVal.pushFiles, filepath.Join(URLPathPrefix, filePath))
+				pushVal.pushFiles = append(pushVal.pushFiles, filepath.Join(opt.URLPathPrefix, filePath))
 
 				// add the file to static files
 				err := sfs.addStaticFile(filepath.Clean(filePath))
