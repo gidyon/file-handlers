@@ -52,7 +52,7 @@ func (fsh *fsHandler) deleteFile(w http.ResponseWriter, r *http.Request, key, pa
 		dir = filepath.Clean(dir)
 		if !fsh.isDirAllowed(dir) {
 			rollBack()
-			http.Error(w, "NOT_ALLOWED_DIRECTORY", http.StatusInternalServerError)
+			http.Error(w, "NOT_ALLOWED_DIRECTORY", http.StatusBadRequest)
 			return
 		}
 	}
@@ -69,7 +69,7 @@ func (fsh *fsHandler) deleteFile(w http.ResponseWriter, r *http.Request, key, pa
 	err = os.Remove(filePath)
 	if err != nil {
 		rollBack()
-		http.Error(w, "DELETE_FILE_FAILED: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "DELETE_FILE_FAILED: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
