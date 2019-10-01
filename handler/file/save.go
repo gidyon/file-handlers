@@ -111,7 +111,7 @@ func (fsh *fsHandler) saveFile(w http.ResponseWriter, r *http.Request, key, path
 		dir = filepath.Clean(dir)
 		if !fsh.isDirAllowed(dir) {
 			rollBack()
-			http.Error(w, "NOT_ALLOWED_ACESS_TO_DIRECTORY", http.StatusInternalServerError)
+			http.Error(w, "NOT_ALLOWED_ACESS_TO_DIRECTORY", http.StatusBadRequest)
 			return
 		}
 	}
@@ -148,6 +148,10 @@ func (fsh *fsHandler) saveFile(w http.ResponseWriter, r *http.Request, key, path
 			http.Error(w, "FAILED_TO_COMMIT_FILE", http.StatusInternalServerError)
 			return
 		}
+	}
+
+	if r.Method == http.MethodPost {
+		w.WriteHeader(http.StatusCreated)
 	}
 
 	w.Write([]byte("SUCCESS"))
