@@ -16,8 +16,8 @@ type FileMeta struct {
 	ID       string `gorm:"primary_key"`
 	OwnerID  string `gorm:"type:varchar(50)"`
 	OwnerTag string `gorm:"type:varchar(20)"`
-	Mime     string `gorm:"type:varchar(20)"`
-	Name     string `gorm:"type:varchar(10)"`
+	Mime     string `gorm:"type:varchar(40)"`
+	Name     string `gorm:"type:varchar(100)"`
 	Path     string `gorm:"type:text"`
 	Size     int64  `gorm:"type:int"`
 }
