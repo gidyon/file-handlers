@@ -2,7 +2,7 @@ package file
 
 import (
 	"github.com/Sirupsen/logrus"
-	fs "github.com/gidyon/file-server"
+	fs "github.com/gidyon/file-handlers"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"

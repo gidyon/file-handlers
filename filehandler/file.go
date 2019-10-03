@@ -3,7 +3,7 @@ package file
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/gidyon/file-server"
+	"github.com/gidyon/file-handlers"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"hash"
@@ -81,10 +81,10 @@ type fsHandler struct {
 	maxUploadSize   int64
 }
 
-// NewHandler creates a file server for the given root dir. It stores files metadata on the provided database connection.
+// New creates a file server for the given root dir. It stores files metadata on the provided database connection.
 // To disable storage of file metadata on the database, pass nil on opt.DB or call DisableDB prior to calling this functin.
 // Once this function has been called, subsequent calls to API setters have no effect.
-func NewHandler(opt *ServerOptions) (http.Handler, error) {
+func New(opt *ServerOptions) (http.Handler, error) {
 	if opt.RootDir == "" {
 		// set root to current directory if its empty
 		opt.RootDir = "."

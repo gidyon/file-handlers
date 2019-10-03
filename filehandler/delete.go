@@ -1,7 +1,7 @@
 package file
 
 import (
-	fs "github.com/gidyon/file-server"
+	fs "github.com/gidyon/file-handlers"
 	"github.com/jinzhu/gorm"
 	"net/http"
 	"os"

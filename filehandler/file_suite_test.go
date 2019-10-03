@@ -51,7 +51,7 @@ var _ = BeforeSuite(func() {
 	SetURLQueryKeyOwnerID("id")
 
 	// setup handler
-	Handler, err = NewHandler(&ServerOptions{RootDir, []string{"uploads"}, http.NotFoundHandler(), DB})
+	Handler, err = New(&ServerOptions{RootDir, []string{"uploads"}, http.NotFoundHandler(), DB})
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(Handler).ShouldNot(BeNil())
 
