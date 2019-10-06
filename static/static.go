@@ -1,10 +1,11 @@
-// Package static is a fast static file server with support for http2 server push.
+// Package static is a secure and fast static file server with support for http2 server push.
 // It caches static files in memory so that subsequent requests for the static file will retrieve the file from memory making it very fast than calling os primitives to open and read the files data.
 // It can serve single page applications (SPAs) with an improved performance because of path caching on paths reesulting to 404.
-// The API allows user to customize how the handler handles NotFound routes.
+// The API allows customization of NotFound handler.
 package static
 
 import (
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -37,6 +38,10 @@ func (po *pushOptions) Key() string {
 // staticFileServer contains cached data and options to customize the static file server
 type staticFileServer struct {
 	rootDir         string
+	indexPage       string
+	allowedDirs     []string
+	staticDirs      map[string]struct{}
+	allowAll        bool
 	pushSupport     bool
 	pushOptions     *http.PushOptions
 	mu              *sync.RWMutex // guards files
@@ -48,9 +53,11 @@ type staticFileServer struct {
 
 // ServerOptions contains options for configuring static file server
 type ServerOptions struct {
-	RootDir         string
+	RootDir         string       // Root directory
+	Index           string       // Index file relative to root
+	AllowedDirs     []string     // List of directories in root that is allowed access, by default all directories are allowed access
+	NotFoundHandler http.Handler // NotFound costom handler
 	URLPathPrefix   string
-	NotFoundHandler http.Handler
 	PushContent     map[string][]string
 }
 
@@ -68,14 +75,63 @@ func NewHandler(opt *ServerOptions) (http.Handler, error) {
 	// clean and update URLPathPrefix
 	opt.URLPathPrefix = "/" + strings.TrimPrefix(filepath.Clean(opt.URLPathPrefix), "/")
 
+	if opt.Index == "" {
+		opt.Index = "./index.html"
+	}
+
+	// clean and update home dir
+	opt.Index = filepath.Clean(opt.Index)
+
 	if opt.NotFoundHandler == nil {
 		// set not found to be http default
 		opt.NotFoundHandler = http.NotFoundHandler()
 	}
 
+	// allowed direcories
+	allowedDirs := make([]string, 0, len(opt.AllowedDirs))
+	for _, dir := range opt.AllowedDirs {
+		dir := filepath.Join(opt.RootDir, dir)
+		if dir == opt.Index {
+			continue
+		}
+		allowedDirs = append(allowedDirs, dir)
+	}
+
+	staticDirs := make(map[string]struct{}, 0)
+	allowAll := len(allowedDirs) == 0
+
+	if !allowAll {
+		var readDir func(string) error
+		readDir = func(dir string) error {
+			fileInfos, err := ioutil.ReadDir(filepath.Clean(dir))
+			if err != nil {
+				return errors.Wrap(err, "failed to read directory")
+			}
+			for _, fileInfo := range fileInfos {
+				name := filepath.Join(dir, fileInfo.Name())
+				if fileInfo.IsDir() {
+					staticDirs[name] = struct{}{}
+					err = readDir(name)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}
+		err := readDir(opt.RootDir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// create the server
 	sfs := &staticFileServer{
 		rootDir:       opt.RootDir,
+		indexPage:     opt.Index,
+		allowedDirs:   allowedDirs,
+		staticDirs:    staticDirs,
+		allowAll:      allowAll,
 		mu:            &sync.RWMutex{},
 		files:         make(map[string]*staticFile, 0),
 		pushContent:   make(map[string]*pushOptions, len(opt.PushContent)),
@@ -133,7 +189,7 @@ func (sfs *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// update to render index page
 	if fpath == "/" || fpath == "" {
-		fpath = "/index.html"
+		fpath = sfs.indexPage
 	}
 
 	// Check if file name exist in map
@@ -141,7 +197,7 @@ func (sfs *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		// pushes content to the client and serve index page
 		pushAndServe := func() {
-			sfs.serverPush(w, "/index.html")
+			sfs.serverPush(w, sfs.indexPage)
 			sfs.notFoundHandler.ServeHTTP(w, r)
 		}
 
@@ -233,6 +289,26 @@ func (sfs *staticFileServer) addNotFoundPath(fpath string) {
 // addStaticFile adds the static file to the map for faster subsequent retrievals on similar path
 func (sfs *staticFileServer) addStaticFile(path string) error {
 	filePath := filepath.Join(sfs.rootDir, path)
+
+	if !sfs.allowAll {
+		allowed := false
+
+		// check if path is trying to access a static directory in root
+		if _, ok := sfs.staticDirs[filepath.Dir(filePath)]; ok {
+			// check that filepath is in list of allowed directories
+			for _, allowedDir := range sfs.allowedDirs {
+				if strings.HasPrefix(filePath, allowedDir) {
+					allowed = true
+					break
+				}
+			}
+
+			if !allowed {
+				return errors.New("directory access not allowed")
+			}
+		}
+	}
+
 	// read file content
 	bs, err := ioutil.ReadFile(filePath)
 	if err != nil {
