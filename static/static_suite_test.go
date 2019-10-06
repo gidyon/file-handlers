@@ -27,7 +27,13 @@ var (
 
 var _ = BeforeSuite(func() {
 	// Setup handler
-	Handler, err = NewHandler(&ServerOptions{RootDir, URLPrefix, http.NotFoundHandler(), nil})
+	Handler, err = NewHandler(&ServerOptions{
+		RootDir:         RootDir,
+		Index:           "index.html",
+		URLPathPrefix:   URLPrefix,
+		AllowedDirs:     nil,
+		NotFoundHandler: http.NotFoundHandler(),
+	})
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(Handler).ShouldNot(BeNil())
 
