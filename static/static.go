@@ -188,7 +188,7 @@ func (sfs *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update to render index page
-	if fpath == "/" || fpath == "" {
+	if fpath == "/" || fpath == "" || fpath == "/." {
 		fpath = sfs.indexPage
 	}
 
@@ -289,7 +289,6 @@ func (sfs *staticFileServer) addNotFoundPath(fpath string) {
 // addStaticFile adds the static file to the map for faster subsequent retrievals on similar path
 func (sfs *staticFileServer) addStaticFile(path string) error {
 	filePath := filepath.Join(sfs.rootDir, path)
-
 	if !sfs.allowAll {
 		allowed := false
 
