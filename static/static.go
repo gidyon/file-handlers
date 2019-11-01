@@ -56,9 +56,10 @@ type ServerOptions struct {
 	RootDir         string       // Root directory
 	Index           string       // Index file relative to root
 	AllowedDirs     []string     // List of directories in root that is allowed access, by default all directories are allowed access
-	NotFoundHandler http.Handler // NotFound costom handler
+	NotFoundHandler http.Handler // NotFound custom handler
 	URLPathPrefix   string
 	PushContent     map[string][]string
+	FallBackIndex   bool
 }
 
 // NewHandler creates a static file server for the given rootDir directory.
@@ -85,6 +86,13 @@ func NewHandler(opt *ServerOptions) (http.Handler, error) {
 	if opt.NotFoundHandler == nil {
 		// set not found to be http default
 		opt.NotFoundHandler = http.NotFoundHandler()
+	}
+
+	if opt.FallBackIndex {
+		path := filepath.Join(opt.RootDir, opt.Index)
+		opt.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, path)
+		})
 	}
 
 	// allowed direcories
