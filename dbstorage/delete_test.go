@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-var _ = Describe("Deleting s File resource #delete", func() {
+var _ = Describe("Deleting File resource #delete", func() {
 	var res *httptest.ResponseRecorder
 
 	BeforeEach(func() {
@@ -33,45 +33,47 @@ var _ = Describe("Deleting s File resource #delete", func() {
 
 		// Create default file for delete
 		Context("Delete a created file", func() {
+			Describe("Creating file in database", func() {
+				It("should succeed with StatusCreated", func() {
+					filename := filepath.Join(DataDir, "output.pdf")
+					Expect(filename).Should(BeARegularFile())
+					Expect(filename).Should(BeAnExistingFile())
 
-			It("should succeed with StatusCreated", func() {
-				filename := filepath.Join(DataDir, "output.pdf")
-				Expect(filename).Should(BeARegularFile())
-				Expect(filename).Should(BeAnExistingFile())
+					body, ctype, err := createFormFile(filename)
+					Expect(err).ShouldNot(HaveOccurred())
+					Expect(ctype).ShouldNot(BeZero())
+					Expect(body).ShouldNot(BeNil())
+					Expect(ctype).ShouldNot(BeZero())
 
-				body, ctype, err := createFormFile(filename)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(ctype).ShouldNot(BeZero())
-				Expect(body).ShouldNot(BeNil())
-				Expect(ctype).ShouldNot(BeZero())
+					url := path.Join(Server.URL(), DeleteFileURL)
 
-				url := path.Join(Server.URL(), DeleteFileURL)
+					req := httptest.NewRequest(http.MethodPost, url, body)
 
-				req := httptest.NewRequest(http.MethodPost, url, body)
+					req.Header.Set("content-type", ctype)
 
-				req.Header.Set("content-type", ctype)
+					Expect(req).ShouldNot(BeNil())
+					Expect(req.Header.Get("content-type")).Should(BeEquivalentTo(ctype))
 
-				Expect(req).ShouldNot(BeNil())
-				Expect(req.Header.Get("content-type")).Should(BeEquivalentTo(ctype))
+					res := httptest.NewRecorder()
+					Handler.ServeHTTP(res, req)
 
-				res := httptest.NewRecorder()
-				Handler.ServeHTTP(res, req)
-
-				Expect(res.Code).Should(BeEquivalentTo(http.StatusCreated))
+					Expect(res.Code).Should(BeEquivalentTo(http.StatusCreated))
+				})
 			})
 
-			It("should succeed with StatusOK when the file resource is available on the server", func() {
-				url := path.Join(Server.URL(), DeleteFileURL)
+			Describe("Deleting the created file", func() {
+				It("should succeed with StatusOK when the file resource is available on the server", func() {
+					url := path.Join(Server.URL(), DeleteFileURL)
 
-				req := httptest.NewRequest(http.MethodDelete, url, nil)
+					req := httptest.NewRequest(http.MethodDelete, url, nil)
 
-				Expect(req).ShouldNot(BeNil())
+					Expect(req).ShouldNot(BeNil())
 
-				Handler.ServeHTTP(res, req)
+					Handler.ServeHTTP(res, req)
 
-				Expect(res.Code).Should(BeEquivalentTo(http.StatusOK))
+					Expect(res.Code).Should(BeEquivalentTo(http.StatusOK))
+				})
 			})
 		})
-
 	})
 })

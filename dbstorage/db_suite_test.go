@@ -89,7 +89,7 @@ func startDB() (*gorm.DB, error) {
 		Port:     "3306",
 		User:     "root",
 		Password: "hakty11",
-		Schema:   "antibug-files",
+		Schema:   "cinemax",
 	})
 }
 
