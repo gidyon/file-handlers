@@ -89,7 +89,7 @@ func (fsDBH *fileDBHandler) saveFile(w http.ResponseWriter, r *http.Request, key
 	// Save file in db
 	err = fsDBH.db.Unscoped().Save(fileData).Error
 	if err != nil {
-		http.Error(w, "DB_SAVE_FILE_FAILED", http.StatusInternalServerError)
+		http.Error(w, "SAVING_FILE_FAILED", http.StatusInternalServerError)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (fsDBH *fileDBHandler) saveFile(w http.ResponseWriter, r *http.Request, key
 				return
 			}
 		} else {
-			msg += " :file too big to be saved in cache"
+			msg = "FILE_TOO_BIG_TO_SAVE_IN_CACHE"
 		}
 	}
 
