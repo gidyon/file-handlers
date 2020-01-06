@@ -1,7 +1,7 @@
 // Package static is a secure and fast static file server with support for http2 server push.
 // It caches static files in memory so that subsequent requests for the static file will retrieve the file from memory making it very fast than calling os primitives to open and read the files data.
-// It can serve single page applications (SPAs) with an improved performance because of path caching on paths reesulting to 404.
-// The API allows customization of NotFound handler.
+// It can serve single page applications (SPAs) with an improved performance because of path caching on paths resulting to 404.
+// The API also allows customization of NotFound handler.
 package static
 
 import (
@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -58,8 +57,8 @@ type ServerOptions struct {
 	AllowedDirs     []string     // List of directories in root that is allowed access, by default all directories are allowed access
 	NotFoundHandler http.Handler // NotFound custom handler
 	URLPathPrefix   string
-	PushContent     map[string][]string
-	FallBackIndex   bool
+	PushContent     map[string][]string // Map of url path to push files
+	FallBackIndex   bool                // Replies with index page for 404 pages
 }
 
 // NewHandler creates a static file server for the given rootDir directory.
@@ -217,7 +216,6 @@ func (sfs *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		err := sfs.addStaticFile(fpath)
 		if os.IsNotExist(err) {
-			// we may have a data race but its fine :)
 			sfs.addNotFoundPath(fpath)
 			pushAndServe()
 			return
@@ -269,7 +267,6 @@ func (sfs *staticFileServer) writeResponse(w http.ResponseWriter, r *http.Reques
 
 	// set headers
 	w.Header().Set("Content-Type", sfile.ctype)
-	w.Header().Set("Content-Length", strconv.FormatInt(sfile.finfo.Size(), 10))
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Last-Modified", sfile.finfo.ModTime().UTC().Format(http.TimeFormat))
 
@@ -280,7 +277,7 @@ func (sfs *staticFileServer) writeResponse(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// getStaticFile retrieves the static file in a concurrent safe manner
+// getStaticFile retrieves the static file
 func (sfs *staticFileServer) getStaticFile(fpath string) (*staticFile, bool) {
 	sfs.mu.RLock()
 	sf, ok := sfs.files[fpath]
@@ -289,9 +286,11 @@ func (sfs *staticFileServer) getStaticFile(fpath string) (*staticFile, bool) {
 	return sf, ok
 }
 
-// addNotFoundPath adds the path to list of notFoundPaths; not concurrent safe;
+// addNotFoundPath adds the path to list of notFoundPaths
 func (sfs *staticFileServer) addNotFoundPath(fpath string) {
+	sfs.mu.Lock()
 	sfs.notFoundPaths[fpath] = 2
+	sfs.mu.Unlock()
 }
 
 // addStaticFile adds the static file to the map for faster subsequent retrievals on similar path
