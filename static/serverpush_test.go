@@ -40,6 +40,7 @@ var _ = Describe("Server push with custom notFoundhandler", func() {
 		NotFoundHandler: notFound,
 		PushContent:     pushContent,
 	})
+
 	Context("setup handler", func() {
 		It("should setup handler without an error", func() {
 			Expect(err).ShouldNot(HaveOccurred())

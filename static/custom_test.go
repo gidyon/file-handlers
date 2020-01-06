@@ -10,12 +10,15 @@ import (
 var _ = Describe("Custom notFoundhandler", func() {
 
 	var (
-		handler http.Handler
-		server  *ghttp.Server
-		res     *httptest.ResponseRecorder
+		handler   http.Handler
+		server    *ghttp.Server
+		res       *httptest.ResponseRecorder
+		headerKey = "nf"
+		headerVal = "not found"
 	)
 
 	notFound := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(headerKey, headerVal)
 		http.ServeFile(w, r, filepath.Join(RootDir, "/index.html"))
 	})
 
@@ -27,6 +30,7 @@ var _ = Describe("Custom notFoundhandler", func() {
 		AllowedDirs:     nil,
 		NotFoundHandler: notFound,
 	})
+
 	Context("Setup Expectations", func() {
 		It("should set up handler without error", func() {
 			Expect(err).ShouldNot(HaveOccurred())
@@ -57,6 +61,7 @@ var _ = Describe("Custom notFoundhandler", func() {
 
 			Expect(res.Code).Should(BeEquivalentTo(http.StatusOK))
 			Expect(res.Header().Get("content-type")).Should(ContainSubstring("text/html"))
+			Expect(res.Header().Get(headerKey)).Should(Equal(headerVal))
 		})
 
 		It("should return file resource when requested file is present in the server", func() {
